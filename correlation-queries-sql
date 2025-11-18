@@ -1,0 +1,81 @@
+/* 
+===========================================================
+ Streaming Survey — Correlation Analysis SQL
+===========================================================
+ This script computes correlation values between key 
+ variables in the streaming_survey dataset. PostgreSQL 
+ versions are provided first (using corr()), followed by 
+ MySQL/SQLite-compatible manual correlation formulas.
+===========================================================
+*/
+
+-----------------------------------------------------------
+-- 1) POSTGRESQL CORRELATION QUERIES
+-----------------------------------------------------------
+
+-- Correlation: Age vs Total Streaming Spend
+SELECT corr(Age, TotalStreamingMonthly) AS age_streaming_corr
+FROM streaming_survey;
+
+-- Correlation: Cable Cost vs Total Streaming Spend
+SELECT corr(CableMonthlyCost, TotalStreamingMonthly) AS cable_streaming_corr
+FROM streaming_survey;
+
+-- Correlation: Income Bracket (numeric-coded) vs Streaming Spend
+SELECT corr(income_num, TotalStreamingMonthly) AS income_streaming_corr
+FROM (
+    SELECT 
+        CASE IncomeBracket
+            WHEN '<30k' THEN 1
+            WHEN '30-50k' THEN 2
+            WHEN '50-75k' THEN 3
+            WHEN '75-100k' THEN 4
+            WHEN '100k+' THEN 5
+        END AS income_num,
+        TotalStreamingMonthly
+    FROM streaming_survey
+) AS mapped;
+
+
+
+-----------------------------------------------------------
+-- 2) MYSQL / SQLITE MANUAL CORRELATION CALCULATIONS
+-----------------------------------------------------------
+
+-- Correlation: Age vs Total Streaming Spend
+SELECT 
+    (AVG(Age * TotalStreamingMonthly)
+     - AVG(Age) * AVG(TotalStreamingMonthly))
+    /
+    (STDDEV(Age) * STDDEV(TotalStreamingMonthly))
+    AS age_streaming_corr
+FROM streaming_survey;
+
+-- Correlation: Cable Cost vs Total Streaming Spend
+SELECT 
+    (AVG(CableMonthlyCost * TotalStreamingMonthly)
+     - AVG(CableMonthlyCost) * AVG(TotalStreamingMonthly))
+    /
+    (STDDEV(CableMonthlyCost) * STDDEV(TotalStreamingMonthly))
+    AS cable_streaming_corr
+FROM streaming_survey;
+
+-- Correlation: Income Bracket (numeric-coded) vs Streaming Spend
+SELECT 
+    (AVG(income_num * TotalStreamingMonthly)
+     - AVG(income_num) * AVG(TotalStreamingMonthly))
+    /
+    (STDDEV(income_num) * STDDEV(TotalStreamingMonthly))
+    AS income_streaming_corr
+FROM (
+    SELECT 
+        CASE IncomeBracket
+            WHEN '<30k' THEN 1
+            WHEN '30-50k' THEN 2
+            WHEN '50-75k' THEN 3
+            WHEN '75-100k' THEN 4
+            WHEN '100k+' THEN 5
+        END AS income_num,
+        TotalStreamingMonthly
+    FROM streaming_survey
+) AS mapped;
